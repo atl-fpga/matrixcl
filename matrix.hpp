@@ -27,7 +27,11 @@ namespace matrix {
   }
 
   cl::Buffer* Matrix::createBuffer(cl::Context* context, cl_mem_flags flags) {
-    return new cl::Buffer(*context, flags, this->size() * sizeof(float), matrix);
+    if (flags != CL_MEM_WRITE_ONLY) {
+      return new cl::Buffer(*context, flags, this->size() * sizeof(float), matrix);
+    } else {
+      return new cl::Buffer(*context, flags, this->size() * sizeof(float));
+    }
   }
 
   unsigned int Matrix::getHeight() {
@@ -89,14 +93,14 @@ namespace matrix {
       cl::Program program = cl::Program(context, "matmul_kernel.cl");
       buildProgram(&context, &program);
 
-      auto mmul = cl::make_kernel<int, cl::Buffer, cl::Buffer, cl::Buffer, 
+      auto mmul = cl::make_kernel<int, cl::Buffer, cl::Buffer, cl::Buffer,
 				  cl::LocalSpaceArg, cl::LocalSpaceArg>(program, "mmul");
       
       cl::Buffer *cl_matA = matA->createBuffer(&context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR);
       cl::Buffer *cl_matB = matB->createBuffer(&context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR);
-      cl::Buffer *cl_result = result->createBuffer(&context, CL_MEM_WRITE_ONLY|CL_MEM_COPY_HOST_PTR);
-      
-      int blocksize = 16;  
+      cl::Buffer *cl_result = result->createBuffer(&context, CL_MEM_WRITE_ONLY);
+
+      int blocksize = 16;
       cl::LocalSpaceArg A_block = cl::Local(sizeof(float) * blocksize*blocksize);
       cl::LocalSpaceArg B_block = cl::Local(sizeof(float) * blocksize*blocksize);
 
@@ -114,13 +118,14 @@ namespace matrix {
 	   B_block);
       
       queue.enqueueReadBuffer(*cl_result, CL_TRUE, 0,
-			      matA->getWidth() * sizeof(float), result->get());
+                              matA->size() * sizeof(float), result->get());
       result->print();
     } catch (cl::Error err) {
       std::cout << "Exception\n";
       std::cerr 
 	<< "ERROR: "
 	<< err.what()
+    << "(" << err.err() << ")"
 	<< std::endl;
     }
 

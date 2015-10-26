@@ -12,8 +12,8 @@
 #include "util.hpp"
 #include "matrix.hpp"
 
-#define WIDTH_A (2)
-#define HEIGHT_A (2)
+#define WIDTH_A (16)
+#define HEIGHT_A (16)
 
 void buildProgram(cl::Context *context, cl::Program* program) {
   try {
