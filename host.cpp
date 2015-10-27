@@ -30,10 +30,10 @@ void buildProgram(cl::Context *context, cl::Program* program) {
 }
 
 void runMatrixVectorMul() {
-  matrix::Matrix *mat = new matrix::Matrix(WIDTH_A, HEIGHT_A);
-  matrix::Matrix *vec = new matrix::Matrix(WIDTH_A, 1);
-  matrix::initRandoms(mat);
-  matrix::initRandoms(vec);
+  std::unique_ptr<matrix::Matrix> mat(new matrix::Matrix(WIDTH_A, HEIGHT_A));
+  std::unique_ptr<matrix::Matrix> vec(new matrix::Matrix(WIDTH_A, 1));
+  matrix::initRandoms(*mat);
+  matrix::initRandoms(*vec);
 
   mat->print();
   vec->print();
@@ -43,19 +43,16 @@ void runMatrixVectorMul() {
   case CL_DEVICE_TYPE_CPU:     printf("DEVICE=CPU\n"); break;
   case CL_DEVICE_TYPE_GPU:     printf("DEVICE=GPU\n"); break;
   default:                     printf("DEVICE=%d\n", DEVICE); break;
-  }  
+  }
 
-  matrix::matrixVectorMultiplation(mat, vec);
-  
-  delete[](mat);
-  delete[](vec);
+  matrix::matrixVectorMultiplation(*mat, *vec);
 }
 
 void runMatrixMatrixMul() {
-  matrix::Matrix *matA = new matrix::Matrix(WIDTH_A, HEIGHT_A);
-  matrix::Matrix *matB = new matrix::Matrix(WIDTH_A, HEIGHT_A);
-  matrix::initRandoms(matA);
-  matrix::initRandoms(matB);
+  std::unique_ptr<matrix::Matrix> matA(new matrix::Matrix(WIDTH_A, HEIGHT_A));
+  std::unique_ptr<matrix::Matrix> matB(new matrix::Matrix(WIDTH_A, HEIGHT_A));
+  matrix::initRandoms(*matA);
+  matrix::initRandoms(*matB);
 
   matA->print();
   matB->print();
@@ -65,12 +62,9 @@ void runMatrixMatrixMul() {
   case CL_DEVICE_TYPE_CPU:     printf("DEVICE=CPU\n"); break;
   case CL_DEVICE_TYPE_GPU:     printf("DEVICE=GPU\n"); break;
   default:                     printf("DEVICE=%d\n", DEVICE); break;
-  }  
+  }
 
-  matrix::matrixMultiplation(matA, matB);
-  
-  delete[](matA);
-  delete[](matB);
+  matrix::matrixMultiplation(*matA, *matB);
 }
 
 int main(int argc, char** argv) {
