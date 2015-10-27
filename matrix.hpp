@@ -9,8 +9,11 @@ namespace matrix {
   class Matrix {
   public:
     Matrix(const unsigned int w, const unsigned int h);
+    Matrix(const Matrix&) = delete;
+    Matrix(const Matrix&& rhs);
+    Matrix& operator=(const Matrix&) = delete;
     float* get();
-    cl::Buffer* createBuffer(cl::Context& context, cl_mem_flags flags);
+    cl::Buffer createBuffer(cl::Context& context, cl_mem_flags flags);
     unsigned int getHeight();
     unsigned int getWidth();
     unsigned int size();
@@ -26,11 +29,14 @@ namespace matrix {
     matrix = new float[width*height];
   }
 
-  cl::Buffer* Matrix::createBuffer(cl::Context& context, cl_mem_flags flags) {
+  Matrix::Matrix(const Matrix&& rhs): width(rhs.width), height(rhs.height), matrix(rhs.matrix) {
+  }
+
+  cl::Buffer Matrix::createBuffer(cl::Context& context, cl_mem_flags flags) {
     if (flags != CL_MEM_WRITE_ONLY) {
-      return new cl::Buffer(context, flags, this->size() * sizeof(float), matrix);
+      return cl::Buffer(context, flags, this->size() * sizeof(float), matrix);
     } else {
-      return new cl::Buffer(context, flags, this->size() * sizeof(float));
+      return cl::Buffer(context, flags, this->size() * sizeof(float));
     }
   }
 
@@ -60,16 +66,27 @@ namespace matrix {
     std::cout << std::endl;
   }
 
-  void initRandoms(Matrix::Matrix& mat) {
-    float* content = mat.get();
-    for (unsigned int i = 0; i < mat.size(); ++i) {
-      content[i] = rand() / (float) RAND_MAX;
+  inline Matrix randmat(const unsigned int width, const unsigned int height) {
+    Matrix m(width, height);
+    float* const __restrict__ p = m.get();
+    for (unsigned int i = 0; i < m.size(); ++i) {
+      p[i] = ::rand() / (float) RAND_MAX;
     }
+    return m;
   }
 
-  void initZeros(Matrix::Matrix& mat) {
-    float* content = mat.get();
-    std::fill_n(content, mat.size(), 0);
+  inline Matrix zeromat(const unsigned int width, const unsigned int height) {
+    Matrix m(width, height);
+    std::fill_n(m.get(), m.size(), 0);
+    return m;
+  }
+
+  inline Matrix randvec(const unsigned int dim) {
+    return matrix::randmat(dim, 1);
+  }
+
+  inline Matrix zerovec(const unsigned int dim) {
+    return matrix::zeromat(dim, 1);
   }
 
   void buildProgram(cl::Context& context, cl::Program& program) {
@@ -88,7 +105,7 @@ namespace matrix {
 
   void matrixMultiplation(matrix::Matrix& matA, matrix::Matrix& matB) {
     try {
-      std::unique_ptr<matrix::Matrix> result(new matrix::Matrix(matA.getWidth(), matA.getHeight()));
+      auto result = matrix::zeromat(matA.getWidth(), matB.getHeight());
 
       cl::Context context(DEVICE);
       cl::Program program = cl::Program(context, "matmul_kernel.cl");
@@ -97,9 +114,9 @@ namespace matrix {
       auto mmul = cl::make_kernel<int, cl::Buffer, cl::Buffer, cl::Buffer,
 				  cl::LocalSpaceArg, cl::LocalSpaceArg>(program, "mmul");
 
-      std::unique_ptr<cl::Buffer> cl_matA(matA.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR));
-      std::unique_ptr<cl::Buffer> cl_matB(matB.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR));
-      std::unique_ptr<cl::Buffer> cl_result(result->createBuffer(context, CL_MEM_WRITE_ONLY));
+      cl::Buffer cl_matA = matA.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR);
+      cl::Buffer cl_matB = matB.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR);
+      cl::Buffer cl_result = result.createBuffer(context, CL_MEM_WRITE_ONLY);
 
       int blocksize = 16;
       cl::LocalSpaceArg A_block = cl::Local(sizeof(float) * blocksize*blocksize);
@@ -112,15 +129,15 @@ namespace matrix {
 				       matA.getHeight()),
 			   cl::NDRange(blocksize, blocksize)),
 	   matA.getWidth(),
-	   *cl_matA,
-	   *cl_matB,
-	   *cl_result,
+	   cl_matA,
+	   cl_matB,
+	   cl_result,
 	   A_block,
 	   B_block);
 
-      queue.enqueueReadBuffer(*cl_result, CL_TRUE, 0,
-                              matA.size() * sizeof(float), result->get());
-      result->print();
+      queue.enqueueReadBuffer(cl_result, CL_TRUE, 0,
+                              matA.size() * sizeof(float), result.get());
+      result.print();
     } catch (cl::Error err) {
       std::cout << "Exception\n";
       std::cerr
@@ -133,7 +150,7 @@ namespace matrix {
 
   void matrixVectorMultiplation(matrix::Matrix& mat, matrix::Matrix& vec) {
     try {
-      std::unique_ptr<matrix::Matrix> result_vector(new matrix::Matrix(mat.getWidth(), 1));
+      auto result_vector = matrix::zerovec(mat.getWidth());
 
       cl::Context context(DEVICE);
       cl::Program program = cl::Program(context, "matvec_mul.cl");
@@ -142,21 +159,21 @@ namespace matrix {
       auto mmul =
 	cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, int>(program, "matrixVectorMul");
 
-      std::unique_ptr<cl::Buffer> cl_mat(mat.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR));
-      std::unique_ptr<cl::Buffer> cl_vec(vec.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR));
-      std::unique_ptr<cl::Buffer> cl_result_vector(result_vector->createBuffer(context, CL_MEM_WRITE_ONLY));
+      cl::Buffer cl_mat = mat.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR);
+      cl::Buffer cl_vec = vec.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR);
+      cl::Buffer cl_result_vector = result_vector.createBuffer(context, CL_MEM_WRITE_ONLY);
 
       cl::CommandQueue queue(context);
       mmul(
 	   cl::EnqueueArgs(queue, cl::NDRange(mat.getHeight())),
-	   *cl_result_vector,
-	   *cl_mat,
-	   *cl_vec,
+	   cl_result_vector,
+	   cl_mat,
+	   cl_vec,
 	   mat.getWidth()
 	   );
 
-      queue.enqueueReadBuffer(*cl_result_vector, CL_TRUE, 0, mat.getWidth() * sizeof(float), result_vector->get());
-      result_vector->print();
+      queue.enqueueReadBuffer(cl_result_vector, CL_TRUE, 0, mat.getWidth() * sizeof(float), result_vector.get());
+      result_vector.print();
     } catch (cl::Error err) {
       std::cout << "Exception\n";
       std::cerr

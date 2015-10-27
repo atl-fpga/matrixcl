@@ -30,13 +30,11 @@ void buildProgram(cl::Context *context, cl::Program* program) {
 }
 
 void runMatrixVectorMul() {
-  std::unique_ptr<matrix::Matrix> mat(new matrix::Matrix(WIDTH_A, HEIGHT_A));
-  std::unique_ptr<matrix::Matrix> vec(new matrix::Matrix(WIDTH_A, 1));
-  matrix::initRandoms(*mat);
-  matrix::initRandoms(*vec);
+  auto mat = matrix::randmat(WIDTH_A, HEIGHT_A);
+  auto vec = matrix::randvec(WIDTH_A);
 
-  mat->print();
-  vec->print();
+  mat.print();
+  vec.print();
 
   switch (DEVICE) {
   case CL_DEVICE_TYPE_DEFAULT: printf("DEVICE=DEFAULT\n"); break;
@@ -45,17 +43,15 @@ void runMatrixVectorMul() {
   default:                     printf("DEVICE=%d\n", DEVICE); break;
   }
 
-  matrix::matrixVectorMultiplation(*mat, *vec);
+  matrix::matrixVectorMultiplation(mat, vec);
 }
 
 void runMatrixMatrixMul() {
-  std::unique_ptr<matrix::Matrix> matA(new matrix::Matrix(WIDTH_A, HEIGHT_A));
-  std::unique_ptr<matrix::Matrix> matB(new matrix::Matrix(WIDTH_A, HEIGHT_A));
-  matrix::initRandoms(*matA);
-  matrix::initRandoms(*matB);
+  auto matA = matrix::randmat(WIDTH_A, HEIGHT_A);
+  auto matB = matrix::randmat(WIDTH_A, HEIGHT_A);
 
-  matA->print();
-  matB->print();
+  matA.print();
+  matB.print();
 
   switch (DEVICE) {
   case CL_DEVICE_TYPE_DEFAULT: printf("DEVICE=DEFAULT\n"); break;
@@ -64,7 +60,7 @@ void runMatrixMatrixMul() {
   default:                     printf("DEVICE=%d\n", DEVICE); break;
   }
 
-  matrix::matrixMultiplation(*matA, *matB);
+  matrix::matrixMultiplation(matA, matB);
 }
 
 int main(int argc, char** argv) {
