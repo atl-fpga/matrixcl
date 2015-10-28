@@ -14,10 +14,24 @@ namespace matrix {
       matrix = new float[W*H];
     }
 
+    virtual ~Matrix<W, H>() {
+      if (matrix) {
+        delete[] matrix;
+        matrix = nullptr;
+      }
+    }
+
     Matrix(const Matrix<W, H>&) = delete;
     Matrix& operator=(const Matrix<W, H>&) = delete;
 
-    Matrix(const Matrix<W, H>&& rhs): matrix(rhs.matrix) {
+    Matrix(Matrix<W, H>&& rhs): matrix(rhs.matrix) {
+      rhs.matrix = nullptr;
+    }
+
+    Matrix& operator=(Matrix<W, H>&& rhs) {
+      this->matrix = rhs.matrix;
+      rhs.matrix = nullptr;
+      return *this;
     }
 
     cl::Buffer createBuffer(cl::Context& context, const cl_mem_flags flags) const {
