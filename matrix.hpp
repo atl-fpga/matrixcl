@@ -11,7 +11,8 @@ namespace matrix {
   class Matrix {
   public:
     Matrix() {
-      // todo: assert width and height > 0
+      static_assert(W > 0, "width must be > 0");
+      static_assert(H > 0, "height must be > 0");
       matrix = new float[W*H];
     }
 
