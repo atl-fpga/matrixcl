@@ -30,8 +30,8 @@ void buildProgram(cl::Context *context, cl::Program* program) {
 }
 
 void runMatrixVectorMul() {
-  auto mat = matrix::randmat(WIDTH_A, HEIGHT_A);
-  auto vec = matrix::randvec(WIDTH_A);
+  auto mat = matrix::randmat<WIDTH_A, HEIGHT_A>();
+  auto vec = matrix::randvec<WIDTH_A>();
 
   mat.print();
   vec.print();
@@ -43,12 +43,12 @@ void runMatrixVectorMul() {
   default:                     printf("DEVICE=%d\n", DEVICE); break;
   }
 
-  matrix::matrixVectorMultiplation(mat, vec);
+  matrix::op::multiply(mat, vec);
 }
 
 void runMatrixMatrixMul() {
-  auto matA = matrix::randmat(WIDTH_A, HEIGHT_A);
-  auto matB = matrix::randmat(WIDTH_A, HEIGHT_A);
+  auto matA = matrix::randmat<WIDTH_A, HEIGHT_A>();
+  auto matB = matrix::randmat<WIDTH_A, HEIGHT_A>();
 
   matA.print();
   matB.print();
@@ -60,7 +60,7 @@ void runMatrixMatrixMul() {
   default:                     printf("DEVICE=%d\n", DEVICE); break;
   }
 
-  matrix::matrixMultiplation(matA, matB);
+  matrix::op::multiply(matA, matB);
 }
 
 int main(int argc, char** argv) {
