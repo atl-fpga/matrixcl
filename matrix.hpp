@@ -122,19 +122,37 @@ namespace matrix {
           throw error;
         }
       }
+
+      class Context {
+      public:
+        Context():
+          context(DEVICE),
+          program_mat(context, "matmul_kernel.cl"),
+          program_vec(context, "matvec_mul.cl"),
+          queue(context) {
+          buildProgram(context, program_mat);
+          buildProgram(context, program_vec);
+        }
+
+        cl::Context context;
+        cl::Program program_mat;
+        cl::Program program_vec;
+        cl::CommandQueue queue;
+      };
     } // enclosed
+
+    static Context g_ctx;
 
     template<const dim_t AW, const dim_t AH, const dim_t BW, const dim_t BH>
     matrix::Matrix<AW, BH> multiply(const matrix::Matrix<AW, AH>& matA, const matrix::Matrix<BW, BH>& matB) {
       try {
-        auto result = matrix::zeromat<AW, BH>();
-
-        cl::Context context(DEVICE);
-        cl::Program program = cl::Program(context, "matmul_kernel.cl");
-        buildProgram(context, program);
-
+        auto& context = g_ctx.context;
+        auto& program = g_ctx.program_mat;
+        auto& queue = g_ctx.queue;
         auto mmul = cl::make_kernel<int, cl::Buffer, cl::Buffer, cl::Buffer,
                                     cl::LocalSpaceArg, cl::LocalSpaceArg>(program, "mmul");
+
+        auto result = matrix::zeromat<AW, BH>();
 
         cl::Buffer cl_matA = matA.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR);
         cl::Buffer cl_matB = matB.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR);
@@ -144,7 +162,6 @@ namespace matrix {
         cl::LocalSpaceArg A_block = cl::Local(sizeof(float) * blocksize*blocksize);
         cl::LocalSpaceArg B_block = cl::Local(sizeof(float) * blocksize*blocksize);
 
-        cl::CommandQueue queue(context);
         mmul(
           cl::EnqueueArgs(queue,
                           cl::NDRange(matA.getWidth(),
@@ -174,20 +191,18 @@ namespace matrix {
     template<const dim_t AW, const dim_t AH, const dim_t BDIM>
     matrix::Matrix<AW, 1> multiply(const matrix::Matrix<AW, AH>& mat, const matrix::Matrix<BDIM, 1>& vec) {
       try {
-        auto result_vector = matrix::zerovec<AW>();
-
-        cl::Context context(DEVICE);
-        cl::Program program = cl::Program(context, "matvec_mul.cl");
-        buildProgram(context, program);
-
+        auto& context = g_ctx.context;
+        auto& program = g_ctx.program_vec;
+        auto& queue = g_ctx.queue;
         auto mmul =
           cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, int>(program, "matrixVectorMul");
+
+        auto result_vector = matrix::zerovec<AW>();
 
         cl::Buffer cl_mat = mat.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR);
         cl::Buffer cl_vec = vec.createBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR);
         cl::Buffer cl_result_vector = result_vector.createBuffer(context, CL_MEM_WRITE_ONLY);
 
-        cl::CommandQueue queue(context);
         mmul(
           cl::EnqueueArgs(queue, cl::NDRange(mat.getHeight())),
           cl_result_vector,
