@@ -9,26 +9,26 @@ namespace matrix {
   template <const unsigned int W, const unsigned int H>
   class Matrix {
   public:
-    Matrix<W, H>() {
+    Matrix() {
       // todo: assert width and height > 0
       matrix = new float[W*H];
     }
 
-    virtual ~Matrix<W, H>() {
+    virtual ~Matrix() {
       if (matrix) {
         delete[] matrix;
         matrix = nullptr;
       }
     }
 
-    Matrix(const Matrix<W, H>&) = delete;
-    Matrix& operator=(const Matrix<W, H>&) = delete;
+    Matrix(const Matrix&) = delete;
+    Matrix& operator=(const Matrix&) = delete;
 
-    Matrix(Matrix<W, H>&& rhs): matrix(rhs.matrix) {
+    Matrix(Matrix&& rhs): matrix(rhs.matrix) {
       rhs.matrix = nullptr;
     }
 
-    Matrix& operator=(Matrix<W, H>&& rhs) {
+    Matrix& operator=(Matrix&& rhs) {
       this->matrix = rhs.matrix;
       rhs.matrix = nullptr;
       return *this;
