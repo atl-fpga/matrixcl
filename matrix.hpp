@@ -101,7 +101,7 @@ namespace matrix {
           throw error;
         }
       }
-    }
+    } // enclosed
 
     template<const unsigned int AW, const unsigned int AH, const unsigned int BW, const unsigned int BH>
     void multiply(matrix::Matrix<AW, AH>& matA, matrix::Matrix<BW, BH>& matB) {
@@ -184,7 +184,7 @@ namespace matrix {
           << std::endl;
       }
     }
-  }
+  } // namespace op
 
 } // namespace matrix
 
