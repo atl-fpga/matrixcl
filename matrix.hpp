@@ -5,8 +5,9 @@
 #include "cl.hpp"
 
 namespace matrix {
+  typedef unsigned int dim_t;
 
-  template <const unsigned int W, const unsigned int H>
+  template <const dim_t W, const dim_t H>
   class Matrix {
   public:
     Matrix() {
@@ -46,15 +47,15 @@ namespace matrix {
       return matrix;
     }
 
-    unsigned int getHeight() const {
+    dim_t getHeight() const {
       return H;
     }
 
-    unsigned int getWidth() const {
+    dim_t getWidth() const {
       return W;
     }
 
-    unsigned int size() const {
+    dim_t size() const {
       return W*H;
     }
 
@@ -72,29 +73,30 @@ namespace matrix {
     float *matrix;
   };
 
-  template <const unsigned int W, const unsigned int H>
+  template <const dim_t W, const dim_t H>
   inline Matrix<W, H> randmat() {
     Matrix<W, H> m;
     float* const __restrict__ p = m.get();
-    for (unsigned int i = 0; i < m.size(); ++i) {
+
+    for (auto i = 0; i < m.size(); ++i) {
       p[i] = ::rand() / (float) RAND_MAX;
     }
     return m;
   }
 
-  template <const unsigned int W, const unsigned int H>
+  template <const dim_t W, const dim_t H>
   inline Matrix<W, H> zeromat() {
     Matrix<W, H> m;
     std::fill_n(m.get(), m.size(), 0);
     return m;
   }
 
-  template <const unsigned int DIM>
+  template <const dim_t DIM>
   inline Matrix<DIM, 1> randvec() {
     return matrix::randmat<DIM, 1>();
   }
 
-  template <const unsigned int DIM>
+  template <const dim_t DIM>
   inline Matrix<DIM, 1> zerovec() {
     return matrix::zeromat<DIM, 1>();
   }
@@ -117,7 +119,7 @@ namespace matrix {
       }
     } // enclosed
 
-    template<const unsigned int AW, const unsigned int AH, const unsigned int BW, const unsigned int BH>
+    template<const dim_t AW, const dim_t AH, const dim_t BW, const dim_t BH>
     matrix::Matrix<AW, BH> multiply(const matrix::Matrix<AW, AH>& matA, const matrix::Matrix<BW, BH>& matB) {
       try {
         auto result = matrix::zeromat<AW, BH>();
@@ -164,7 +166,7 @@ namespace matrix {
       }
     }
 
-    template<const unsigned int AW, const unsigned int AH, const unsigned int BDIM>
+    template<const dim_t AW, const dim_t AH, const dim_t BDIM>
     matrix::Matrix<AW, 1> multiply(const matrix::Matrix<AW, AH>& mat, const matrix::Matrix<BDIM, 1>& vec) {
       try {
         auto result_vector = matrix::zerovec<AW>();
