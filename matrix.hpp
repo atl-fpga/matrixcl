@@ -104,7 +104,7 @@ namespace matrix {
     } // enclosed
 
     template<const unsigned int AW, const unsigned int AH, const unsigned int BW, const unsigned int BH>
-    void multiply(const matrix::Matrix<AW, AH>& matA, const matrix::Matrix<BW, BH>& matB) {
+    matrix::Matrix<AW, BH> multiply(const matrix::Matrix<AW, AH>& matA, const matrix::Matrix<BW, BH>& matB) {
       try {
         auto result = matrix::zeromat<AW, BH>();
 
@@ -138,7 +138,7 @@ namespace matrix {
 
         queue.enqueueReadBuffer(cl_result, CL_TRUE, 0,
                                 matA.size() * sizeof(float), result.get());
-        result.print();
+        return result;
       } catch (cl::Error err) {
         std::cout << "Exception\n";
         std::cerr
@@ -146,11 +146,12 @@ namespace matrix {
           << err.what()
           << "(" << err.err() << ")"
           << std::endl;
+        throw;
       }
     }
 
     template<const unsigned int AW, const unsigned int AH, const unsigned int BDIM>
-    void multiply(const matrix::Matrix<AW, AH>& mat, const matrix::Matrix<BDIM, 1>& vec) {
+    matrix::Matrix<AW, 1> multiply(const matrix::Matrix<AW, AH>& mat, const matrix::Matrix<BDIM, 1>& vec) {
       try {
         auto result_vector = matrix::zerovec<AW>();
 
@@ -176,12 +177,14 @@ namespace matrix {
 
         queue.enqueueReadBuffer(cl_result_vector, CL_TRUE, 0, mat.getWidth() * sizeof(float), result_vector.get());
         result_vector.print();
+        return result_vector;
       } catch (cl::Error err) {
         std::cout << "Exception\n";
         std::cerr
           << "ERROR: "
           << err.what()
           << std::endl;
+        throw;
       }
     }
   } // namespace op

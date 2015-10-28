@@ -22,7 +22,8 @@ void runMatrixVectorMul() {
   mat.print();
   vec.print();
 
-  matrix::op::multiply(mat, vec);
+  auto result = matrix::op::multiply(mat, vec);
+  result.print();
 }
 
 void runMatrixMatrixMul() {
@@ -32,7 +33,8 @@ void runMatrixMatrixMul() {
   matA.print();
   matB.print();
 
-  matrix::op::multiply(matA, matB);
+  auto result = matrix::op::multiply(matA, matB);
+  result.print();
 }
 
 int main(int argc, char** argv) {
