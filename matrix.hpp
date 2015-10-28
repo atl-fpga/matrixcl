@@ -4,6 +4,9 @@
 #define __CL_ENABLE_EXCEPTIONS
 #include "cl.hpp"
 
+#include <random>
+#include <functional>
+
 namespace matrix {
   typedef unsigned int dim_t;
 
@@ -78,9 +81,10 @@ namespace matrix {
   inline Matrix<W, H> randmat() {
     Matrix<W, H> m;
     float* const __restrict__ p = m.get();
+    auto gen = std::bind(std::uniform_real_distribution<float>(0.0f, 1.0f), std::default_random_engine());
 
     for (auto i = 0; i < m.size(); ++i) {
-      p[i] = ::rand() / (float) RAND_MAX;
+      p[i] = gen();
     }
     return m;
   }
