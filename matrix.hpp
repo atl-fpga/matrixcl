@@ -20,7 +20,7 @@ namespace matrix {
     Matrix(const Matrix<W, H>&& rhs): matrix(rhs.matrix) {
     }
 
-    cl::Buffer createBuffer(cl::Context& context, cl_mem_flags flags) const {
+    cl::Buffer createBuffer(cl::Context& context, const cl_mem_flags flags) const {
       if (flags != CL_MEM_WRITE_ONLY) {
         return cl::Buffer(context, flags, this->size() * sizeof(float), matrix);
       } else {
@@ -104,7 +104,7 @@ namespace matrix {
     } // enclosed
 
     template<const unsigned int AW, const unsigned int AH, const unsigned int BW, const unsigned int BH>
-    void multiply(matrix::Matrix<AW, AH>& matA, matrix::Matrix<BW, BH>& matB) {
+    void multiply(const matrix::Matrix<AW, AH>& matA, const matrix::Matrix<BW, BH>& matB) {
       try {
         auto result = matrix::zeromat<AW, BH>();
 
@@ -150,7 +150,7 @@ namespace matrix {
     }
 
     template<const unsigned int AW, const unsigned int AH, const unsigned int BDIM>
-    void multiply(matrix::Matrix<AW, AH>& mat, matrix::Matrix<BDIM, 1>& vec) {
+    void multiply(const matrix::Matrix<AW, AH>& mat, const matrix::Matrix<BDIM, 1>& vec) {
       try {
         auto result_vector = matrix::zerovec<AW>();
 
